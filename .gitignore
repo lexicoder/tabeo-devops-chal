@@ -1,0 +1,9 @@
+### IDE ###
+.idea
+.vscode
+*.code-workspace
+
+### OSX ###
+*.DS_Store
+.AppleDouble
+.LSOverride
