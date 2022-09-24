@@ -10,10 +10,12 @@ on:
 
 env:
   APP_NAME: spacetrouble
-  GCP_REGION: europe-west3
 
 jobs:
   docker:
+    strategy:
+      matrix:
+        component: ["booking-server", "write-hello", "migrate"]
     name: Build and push docker image
     runs-on: ubuntu-latest
     permissions:
@@ -41,13 +43,13 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP_NAME }}
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP_NAME }}-${{ matrix.component }}
 
       - name: Build and push
         id: build-and-push
         uses: docker/build-push-action@v3
         with:
-          context: .
+          context: ${{ matrix.component }}.Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
