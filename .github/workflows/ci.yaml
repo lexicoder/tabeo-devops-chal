@@ -156,7 +156,7 @@ jobs:
           install_components: 'alpha'
       
       - name: Test GCP auth
-        run: gcloud alpha storage ls
+        run: gcloud storage ls gs://$CLUSTER_NAME-terraform/
 
       - uses: hashicorp/setup-terraform@v2
 
