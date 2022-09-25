@@ -152,8 +152,6 @@ jobs:
 
       - name: 'Set up Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@v0'
-        with:
-          install_components: 'alpha'
       
       - name: Test GCP auth
         run: gcloud alpha storage ls
