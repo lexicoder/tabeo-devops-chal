@@ -165,6 +165,10 @@ jobs:
         id: fmt
         run: terraform fmt -check
         continue-on-error: true
+      
+      - name: Terraform unlock state
+        id: unlock-state
+        run: terraform force-unlock -force 1664139146982086
 
       - name: Terraform Init
         id: init
