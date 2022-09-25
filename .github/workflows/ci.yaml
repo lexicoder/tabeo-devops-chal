@@ -120,6 +120,12 @@ jobs:
           helm repo update
           helm upgrade --install --set "auth.password=spacetrouble" --set "auth.database=spacetrouble" --set "auth.username=spacetrouble" --wait db bitnami/postgresql
 
+      - name: Install cert-manager
+        run: |
+          helm repo add jetstack https://charts.jetstack.io
+          helm repo update
+          helm upgrade --install cert-manager jetstack/cert-manager --set installCRDs=true --wait
+
       - name: Run chart-testing (install)
         run: ct install --all
 
@@ -130,9 +136,16 @@ jobs:
     defaults:
       run:
         working-directory: ./terraform
+    env:
+      TF_VAR_postgres_db: ${{ secrets.POSTGRES_DB }}
+      TF_VAR_postgres_user: ${{ secrets.POSTGRES_USER }}
+      TF_VAR_postgres_password: ${{ secrets.POSTGRES_PASSWORD }}
+
     permissions:
       contents: 'read'
       id-token: 'write'
+    outputs:
+      database_ip: ${{ steps.get-db-ip.outputs.database_ip }}
     steps:
       - uses: actions/checkout@v3
         
@@ -213,9 +226,69 @@ jobs:
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve
+  
+  deploy:
+    name: Deploy app
+    runs-on: ubuntu-latest
+    concurrency: deploy
+    needs: [docker, helm, terraform]
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+      - uses: actions/checkout@v3
+
+      - id: auth-gcp
+        name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v0
+        with:
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.SERVICE_ACCOUNT }}
+
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v0'
+        with:
+          install_components: 'alpha'
+
+      - name: Get database IP
+        id: get-database-ip
+        run: |
+          cd terraform
+          terraform init
+          echo "::set-output name=DATABASE_IP::$(terraform output -raw database_ip)"
+
+      - uses: azure/setup-helm@v3
+        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
 
       - name: Set up GKE credentials
         uses: google-github-actions/get-gke-credentials@v0
         with:
           cluster_name: ${{ env.CLUSTER_NAME }}
           location: ${{ env.GCP_REGION }}
+      
+      - name: Install nginx ingress
+        run: |
+          helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+          helm repo update
+          helm upgrade --install nginx ingress-nginx/ingress-nginx --wait
+
+      - name: Install cert-manager
+        run: |
+          helm repo add jetstack https://charts.jetstack.io
+          helm repo update
+          helm upgrade --install cert-manager jetstack/cert-manager --set installCRDs=true --wait
+
+      - name: Install application
+        run: |
+          export LB_IP=$(kubectl get svc nginx-ingress-nginx-controller --template="{{range .status.loadBalancer.ingress}}{{.ip}}{{end}}")
+          helm upgrade --install \
+          --set "postgresql.host=${{ steps.get-database-ip.outputs.DATABASE_IP }}" \
+          --set "postgresql.db=${{ secrets.POSTGRES_DB }}" \
+          --set "postgresql.user=${{ secrets.POSTGRES_USER }}" \
+          --set "postgresql.password=${{ secrets.POSTGRES_PASSWORD }}" \
+          --set "ingress.hosts[0].host=$LB_IP.nip.io" \
+          --set "ingress.hosts[0].paths[0].path=/" \
+          --set "ingress.hosts[0].paths[0].pathType=ImplementationSpecific" \
+          --set "ingress.tls[0].secretName=$LB_IP" \
+          --set "ingress.tls[0].hosts[0]=$LB_IP.nip.io" \
+          spacetrouble charts/spacetrouble
