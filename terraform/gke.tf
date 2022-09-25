@@ -12,6 +12,6 @@ module "gke_cluster" {
   network            = module.vpc.id
   instance_type      = "e2-micro"
   preemptible        = true
-  kubernetes_version = "1.24"
+  kubernetes_version = "1.23"
   network_cidr       = module.vpc.cidr
 }
