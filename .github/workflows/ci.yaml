@@ -126,6 +126,7 @@ jobs:
   terraform:
     name: Apply terraform config
     runs-on: ubuntu-latest
+    concurrency: terraform
     defaults:
       run:
         working-directory: ./terraform
