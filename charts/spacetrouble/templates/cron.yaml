@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "spacetrouble.fullname" . }}
+  labels:
+    {{- include "spacetrouble.labels" . | nindent 4 }}
+spec:
+  schedule: "*/15 * * * MON-SAT"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: write-hello
+            securityContext:
+              {{- toYaml .Values.securityContext | nindent 14 }}
+            image: "{{ .Values.cron.image.repository }}:{{ .Values.cron.image.tag | default .Chart.AppVersion }}"
+            imagePullPolicy: {{ .Values.cron.image.pullPolicy }}
+            env:
+              - name: POSTGRES_HOST
+                value: "{{ .Values.postgresql.host }}"
+              - name: POSTGRES_PORT
+                value: "{{ .Values.postgresql.port }}"
+              - name: POSTGRES_DB
+                value: "{{ .Values.postgresql.db }}"
+              - name: POSTGRES_USER
+                value: "{{ .Values.postgresql.user }}"
+              - name: POSTGRES_PASSWORD
+                value: "{{ .Values.postgresql.password }}"
+          restartPolicy: Never

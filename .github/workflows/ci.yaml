@@ -82,3 +82,41 @@ jobs:
         env:
           COSIGN_EXPERIMENTAL: "true"
         run: echo "${{ steps.meta.outputs.tags }}" | xargs -I {} cosign sign {}@${{ steps.build-and-push.outputs.digest }}
+
+  helm:
+    name: Test helm chart
+    runs-on: ubuntu-latest
+    concurrency: helm-charts
+    steps:
+      - uses: actions/checkout@v3
+        
+      - name: Set chart version
+        run: |
+          cd charts
+          sed -i 's/version: 0.1.0/version: 0.1.'$GITHUB_RUN_NUMBER'/g' */Chart.yaml
+      
+      - name: Set up chart-testing
+        uses: helm/chart-testing-action@v2.3.0
+
+      - name: Run chart-testing (list-changed)
+        id: list-changed
+        run: |
+          changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }})
+          if [[ -n "$changed" ]]; then
+            echo "::set-output name=changed::true"
+          fi
+
+      - name: Run chart-testing (lint)
+        run: ct lint --target-branch ${{ github.event.repository.default_branch }}
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1
+      
+      - name: Install postgres in kind cluster
+        run: |
+          helm repo add bitnami https://charts.bitnami.com/bitnami
+          helm repo update
+          helm upgrade --install --set "auth.password=spacetrouble" --set "auth.database=spacetrouble" --set "auth.username=spacetrouble" --wait db bitnami/postgresql
+
+      - name: Run chart-testing (install)
+        run: ct install --all

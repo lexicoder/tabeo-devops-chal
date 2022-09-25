@@ -1,0 +1,38 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "spacetrouble.fullname" . }}
+  labels:
+    {{- include "spacetrouble.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": hook-succeeded,before-hook-creation
+spec:
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "spacetrouble.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: db-migration
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 12 }}
+        image: "{{ .Values.migration.image.repository }}:{{ .Values.migration.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.migration.image.pullPolicy }}
+        env:
+          - name: PGHOST
+            value: "{{ .Values.postgresql.host }}"
+          - name: PGPORT
+            value: "{{ .Values.postgresql.port }}"
+          - name: PGDATABASE
+            value: "{{ .Values.postgresql.db }}"
+          - name: PGUSER
+            value: "{{ .Values.postgresql.user }}"
+          - name: PGPASSWORD
+            value: "{{ .Values.postgresql.password }}"
