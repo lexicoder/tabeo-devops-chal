@@ -1,0 +1,304 @@
+---
+# Source: spacetrouble/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: release-name-spacetrouble
+  labels:
+    helm.sh/chart: spacetrouble-0.1.0
+    app.kubernetes.io/name: spacetrouble
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+---
+# Source: spacetrouble/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-name-spacetrouble
+  labels:
+    helm.sh/chart: spacetrouble-0.1.0
+    app.kubernetes.io/name: spacetrouble
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: spacetrouble
+    app.kubernetes.io/instance: release-name
+---
+# Source: spacetrouble/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: release-name-spacetrouble
+  labels:
+    helm.sh/chart: spacetrouble-0.1.0
+    app.kubernetes.io/name: spacetrouble
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: spacetrouble
+      app.kubernetes.io/instance: release-name
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: spacetrouble
+        app.kubernetes.io/instance: release-name
+    spec:
+      serviceAccountName: release-name-spacetrouble
+      securityContext:
+        {}
+      containers:
+        - name: spacetrouble
+          securityContext:
+            {}
+          image: "lexicoder/spacetrouble-booking-server:main"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: POSTGRES_HOST
+              value: "db-postgresql.default"
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: POSTGRES_DB
+              value: "spacetrouble"
+            - name: POSTGRES_USER
+              value: "spacetrouble"
+            - name: POSTGRES_PASSWORD
+              value: "spacetrouble"
+          ports:
+            - name: http
+              containerPort: 5000
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /v1/health
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /v1/health
+              port: http
+          resources:
+            {}
+---
+# Source: spacetrouble/templates/hpa.yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: release-name-spacetrouble-me
+  labels:
+    helm.sh/chart: spacetrouble-0.1.0
+    app.kubernetes.io/name: spacetrouble
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: release-name-spacetrouble
+  minReplicas: 1
+  maxReplicas: 100
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 80
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+---
+# Source: spacetrouble/templates/cron-sunday.yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: release-name-spacetrouble-sunday
+  labels:
+    helm.sh/chart: spacetrouble-0.1.0
+    app.kubernetes.io/name: spacetrouble
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  schedule: "0 * * * SUN"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: write-hello
+            securityContext:
+              {}
+            image: "lexicoder/spacetrouble-write-hello:main"
+            imagePullPolicy: IfNotPresent
+            env:
+              - name: POSTGRES_HOST
+                value: "db-postgresql.default"
+              - name: POSTGRES_PORT
+                value: "5432"
+              - name: POSTGRES_DB
+                value: "spacetrouble"
+              - name: POSTGRES_USER
+                value: "spacetrouble"
+              - name: POSTGRES_PASSWORD
+                value: "spacetrouble"
+          restartPolicy: Never
+---
+# Source: spacetrouble/templates/cron.yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: release-name-spacetrouble
+  labels:
+    helm.sh/chart: spacetrouble-0.1.0
+    app.kubernetes.io/name: spacetrouble
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  schedule: "*/15 * * * MON-SAT"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: write-hello
+            securityContext:
+              {}
+            image: "lexicoder/spacetrouble-write-hello:main"
+            imagePullPolicy: IfNotPresent
+            env:
+              - name: POSTGRES_HOST
+                value: "db-postgresql.default"
+              - name: POSTGRES_PORT
+                value: "5432"
+              - name: POSTGRES_DB
+                value: "spacetrouble"
+              - name: POSTGRES_USER
+                value: "spacetrouble"
+              - name: POSTGRES_PASSWORD
+                value: "spacetrouble"
+          restartPolicy: Never
+---
+# Source: spacetrouble/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: release-name-spacetrouble
+  labels:
+    helm.sh/chart: spacetrouble-0.1.0
+    app.kubernetes.io/name: spacetrouble
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    cert-manager.io/issuer: letsencrypt
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: "nip.io"
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: release-name-spacetrouble
+                port:
+                  number: 80
+---
+# Source: spacetrouble/templates/issuer.yaml
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: letsencrypt
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: dimeji.isola@gmail.com
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt
+    # Enable the HTTP-01 challenge provider
+    solvers:
+      - http01:
+          ingress:
+            class: nginx
+---
+# Source: spacetrouble/templates/tests/test-connection.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "release-name-spacetrouble-test-connection"
+  labels:
+    helm.sh/chart: spacetrouble-0.1.0
+    app.kubernetes.io/name: spacetrouble
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['release-name-spacetrouble:80/v1/health']
+  restartPolicy: Never
+---
+# Source: spacetrouble/templates/migration.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: release-name-spacetrouble
+  labels:
+    helm.sh/chart: spacetrouble-0.1.0
+    app.kubernetes.io/name: spacetrouble
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": hook-succeeded,before-hook-creation
+spec:
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: spacetrouble
+        app.kubernetes.io/instance: release-name
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: db-migration
+        securityContext:
+            {}
+        image: "lexicoder/spacetrouble-migrate:main"
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: PGHOST
+            value: "db-postgresql.default"
+          - name: PGPORT
+            value: "5432"
+          - name: PGDATABASE
+            value: "spacetrouble"
+          - name: PGUSER
+            value: "spacetrouble"
+          - name: PGPASSWORD
+            value: "spacetrouble"
