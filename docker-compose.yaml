@@ -1,0 +1,53 @@
+version: "3.9"
+services:
+  web:
+    build:
+      context: .
+      dockerfile: booking-server.Dockerfile
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER
+      - POSTGRES_DB
+      - POSTGRES_PASSWORD
+    ports:
+      - 8080:5000
+    depends_on:
+      db_migration:
+        condition: service_completed_successfully
+      db:
+        condition: service_started
+  cron:
+    build:
+      context: .
+      dockerfile: ./write-hello.Dockerfile
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER
+      - POSTGRES_DB
+      - POSTGRES_PASSWORD
+    depends_on:
+      db_migration:
+        condition: service_completed_successfully
+      db:
+        condition: service_started
+  db_migration:
+    build:
+      context: .
+      dockerfile: ./migrate.Dockerfile
+    environment:
+      - PGHOST=db
+      - PGPORT=5432
+      - PGDATABASE=${POSTGRES_DB}
+      - PGUSER=${POSTGRES_USER}
+      - PGPASSWORD=${POSTGRES_PASSWORD}
+    depends_on:
+      db:
+        condition: service_started
+  db:
+    image: postgres:14.5
+    environment:
+      - POSTGRES_USER
+      - POSTGRES_DB
+      - POSTGRES_PASSWORD
