@@ -219,3 +219,24 @@ Create a new migration:
 ```
 PGHOST=localhost PGDATABASE=space PGUSER=postgres tern new initial_tbls -m ./migrations
 ```
+
+## Deployment
+
+### GCP
+#### Requirements
+
+* Workload Identity Federation is configured on GCP for the repository. Instructions on how to do this can be found [here](https://cloud.google.com/iam/docs/configuring-workload-identity-federation#github-actions)
+* Github Actions secret `WORKLOAD_IDENTITY_PROVIDER` is set to the name the Workload Identity Federation provider.
+* Github Actions secret `SERVICE_ACCOUNT` is set to the name of the Service Account the Workload Identity Federation provider will impersonate.
+
+Notes:
+    Run setup.sh and follow the prompts to setup Workload Identity Federation.
+
+### Local
+
+#### Requirements
+
+* docker
+* docker-compose
+
+Run `docker-compose up` to spin up a local testing environment.
