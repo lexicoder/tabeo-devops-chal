@@ -230,7 +230,7 @@ PGHOST=localhost PGDATABASE=space PGUSER=postgres tern new initial_tbls -m ./mig
 * Github Actions secret `SERVICE_ACCOUNT` is set to the name of the Service Account the Workload Identity Federation provider will impersonate.
 
 Notes:
-    Run setup.sh and follow the prompts to setup Workload Identity Federation.
+    Run `./setup.sh` and follow the prompts to setup Workload Identity Federation.
 
 ### Local
 
