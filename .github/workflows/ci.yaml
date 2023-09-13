@@ -18,7 +18,7 @@ jobs:
     name: Run tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -44,7 +44,7 @@ jobs:
       contents: 'read'
       id-token: 'write'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -90,7 +90,7 @@ jobs:
     runs-on: ubuntu-latest
     concurrency: helm-charts
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         
       - name: Set chart version
         run: |
@@ -147,7 +147,7 @@ jobs:
     outputs:
       database_ip: ${{ steps.get-db-ip.outputs.database_ip }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         
       - name: tfsec
         uses: aquasecurity/tfsec-action@v1.0.2
@@ -236,7 +236,7 @@ jobs:
       contents: 'read'
       id-token: 'write'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - id: auth-gcp
         name: Authenticate to Google Cloud
