@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/atrox/haikunatorgo/v2 v2.0.1
-	github.com/google/uuid v1.4.0
+	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v4 v4.17.2
 	github.com/testcontainers/testcontainers-go v0.27.0
 )
