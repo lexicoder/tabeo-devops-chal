@@ -172,7 +172,7 @@ jobs:
       - name: Test GCP auth
         run: gcloud storage ls gs://$CLUSTER_NAME-terraform/
 
-      - uses: hashicorp/setup-terraform@v2
+      - uses: hashicorp/setup-terraform@v3
 
       - name: Terraform fmt
         id: fmt
