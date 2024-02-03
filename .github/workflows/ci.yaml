@@ -261,7 +261,7 @@ jobs:
         if: github.ref == 'refs/heads/master' && github.event_name == 'push'
 
       - name: Set up GKE credentials
-        uses: google-github-actions/get-gke-credentials@v0
+        uses: google-github-actions/get-gke-credentials@v2
         with:
           cluster_name: ${{ env.CLUSTER_NAME }}
           location: ${{ env.GCP_REGION }}
