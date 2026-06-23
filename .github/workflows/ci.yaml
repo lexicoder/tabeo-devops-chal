@@ -257,7 +257,7 @@ jobs:
           terraform init
           echo "::set-output name=DATABASE_IP::$(terraform output -raw database_ip)"
 
-      - uses: azure/setup-helm@v3
+      - uses: azure/setup-helm@v5
         if: github.ref == 'refs/heads/master' && github.event_name == 'push'
 
       - name: Set up GKE credentials
